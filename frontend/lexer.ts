@@ -1,16 +1,26 @@
 export enum TokenType {
+  // Literal Types
   Number,
   Identifier,
-  Equals,
-  OpenParen, CloseParen,
-  BinaryOperator,
-  Let,
 
+  // keywords
+  Let,
+  Const,
+
+  // Grouping * Operator
+  BinaryOperator,
+  Equals,
+  Semicolon,
+  OpenParen,
+  CloseParen,
+
+  // Signified the end of file
   EOF,
 }
 
 const KEYWORDS: Record<string, TokenType> = {
   'let': TokenType.Let,
+  'const': TokenType.Const,
 }
 
 export interface Token {
@@ -18,11 +28,11 @@ export interface Token {
   type: TokenType,
 }
 
-function token(value: string = "", type: TokenType) {
+function token(value = "", type: TokenType) {
   return { value, type }
 }
 
-function isaplpha(src: string) {
+function isalpha(src: string) {
   return src.toUpperCase() != src.toLowerCase()
 }
 
@@ -51,6 +61,8 @@ export function tokenize(sourceCode: string): Token[] {
       tokens.push(token(src.shift(), TokenType.BinaryOperator));
     } else if (src[0] == '=') {
       tokens.push(token(src.shift(), TokenType.Equals));
+    } else if (src[0] == ';') {
+      tokens.push(token(src.shift(), TokenType.Semicolon));
     } else {
       // Handle multicharacter tokens
 
@@ -62,19 +74,19 @@ export function tokenize(sourceCode: string): Token[] {
         }
 
         tokens.push(token(num, TokenType.Number));
-      } else if (isaplpha(src[0])) {
+      } else if (isalpha(src[0])) {
         let ident = ""; // 
-        while (src.length > 0 && isaplpha(src[0])) {
+        while (src.length > 0 && isalpha(src[0])) {
           ident += src.shift();
         }
 
         // check for reserved keywords
         const reserved = KEYWORDS[ident];
-        if (reserved == undefined) {
-          tokens.push(token(ident, TokenType.Identifier));
+        if (typeof reserved == "number") {
+          tokens.push(token(ident, KEYWORDS[ident]));
         }
         else {
-          tokens.push(token(ident, reserved)); 
+          tokens.push(token(ident, TokenType.Identifier)); 
         }
       } else if (isskippable(src[0])) {
         src.shift();
@@ -88,8 +100,3 @@ export function tokenize(sourceCode: string): Token[] {
   tokens.push(token('EndOfFile', TokenType.EOF));
   return tokens;
 }
-
-// const source = await Deno.readTextFile('./test.txt')
-// for (const token of tokenize(source)) {
-//   console.log(token)
-// }

@@ -1,4 +1,4 @@
-import { Stat, Program, Expr, BinaryExpr, NumericLiteral, Identifier } from './ast.ts';
+import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration } from './ast.ts';
 import { tokenize, Token, TokenType } from './lexer.ts';
 
 export default class Parser {
@@ -17,7 +17,7 @@ export default class Parser {
     return prev;
   }
 
-  private expect(type: TokenType, err: any) {
+  private expect(type: TokenType, err: string) {
     const prev = this.tokens.shift() as Token;
     if (!prev || prev.type != type) {
       console.error("Parser Error:\n", err, prev, " -Expecting: ", type);
@@ -36,15 +36,49 @@ export default class Parser {
 
     // Parse until end of file
     while (this.not_eof()) {
-      program.body.push(this.parse_stat());
+      program.body.push(this.parse_Stmt());
     }
 
     return program;
   }
 
-  private parse_stat(): Stat {
+  private parse_Stmt(): Stmt {
     // skip to parse_expr()
-    return this.parse_expr();
+    switch (this.at().type) {
+      case TokenType.Let:
+      case TokenType.Const:
+        return this.parse_var_declaration();
+      default:
+        return this.parse_expr();
+    }
+  }
+
+  parse_var_declaration(): Stmt {
+    const isConstant = this.eat().type == TokenType.Const;
+    const identifier = this.expect(
+      TokenType.Identifier,
+      "Expected identifier name following let | const keywords."
+    ).value;
+
+    if (this.at().type == TokenType.Semicolon) {
+      this.eat();
+      if (isConstant) {
+        throw "Must assign value to constant expression. No value provided.";
+      }
+
+      return { kind: "VarDeclaration", identifier, constant: false } as VarDeclaration;
+    }
+
+    this.expect(TokenType.Equals, "Expected equals token expression following identifier in var declaration.");
+    const declaration = {
+      kind: "VarDeclaration",
+      identifier: identifier,
+      value: this.parse_expr(),
+      constant: isConstant,
+    } as VarDeclaration;
+
+    this.expect(TokenType.Semicolon, "Variable declaration statement must end with semicolon.");
+    return declaration;
   }
 
   private parse_expr(): Expr {
@@ -53,7 +87,7 @@ export default class Parser {
 
   private parse_additive_expr(): Expr {
     let left = this.parse_multiplicitive_expr();
-    
+
     while (this.at().value == '+' || this.at().value == '-') {
       const operator = this.eat().value;
       const right = this.parse_multiplicitive_expr();
@@ -68,7 +102,7 @@ export default class Parser {
 
   private parse_multiplicitive_expr(): Expr {
     let left = this.parse_primary_expr();
-    
+
     while (this.at().value == '*' || this.at().value == '/' || this.at().value == '%') {
       const operator = this.eat().value;
       const right = this.parse_primary_expr();
@@ -92,11 +126,12 @@ export default class Parser {
           kind: "NumericLiteral",
           value: parseFloat(this.eat().value)
         } as NumericLiteral;
-      case TokenType.OpenParen:
+      case TokenType.OpenParen: {
         this.eat();
         const value = this.parse_expr();
         this.expect(TokenType.CloseParen, "Unexpected token found inside parenthesised expression. Expected expression.");
         return value;
+      }
 
       default:
         console.error("Unexpected token found during parsing", this.at());

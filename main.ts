@@ -1,19 +1,28 @@
 import Parser from './frontend/parser.ts'
+import Environment from './runtime/environment.ts';
+import { evaluate } from './runtime/interpreter.ts'
+import { MK_NULL, MK_BOOLEAN, MK_NUMBER, NumberVal } from './runtime/values.ts';
 
 repl()
 
 async function repl() {
   const parser = new Parser();
+  const env = new Environment();
+  env.declareVar('x', MK_NUMBER(100));
+  env.declareVar('null', MK_NULL());
+  env.declareVar('true', MK_BOOLEAN(true));
+  env.declareVar('false', MK_BOOLEAN(false));
   console.log('\nRepl v0.1');
 
   while (true) {
-    const input = prompt(", ");
+    const input = prompt("> ");
 
     if (!input || input.includes("exit")) {
       Deno.exit(1);
     }
 
     const program = parser.produceAST(input);
-    console.log(program);
+    const result = evaluate(program, env);
+    console.log(result);
   }
 }

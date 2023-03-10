@@ -1,5 +1,9 @@
 export type NodeType =
+  // STATEMENTS
   | "Program"
+  | "VarDeclaration"
+
+  // EXPRESSIONS
   | "NumericLiteral"
   | "Identifier"
   | "BinaryExpr"
@@ -7,16 +11,23 @@ export type NodeType =
   // | "UnaryExpr"
   // | "FunctionDeclaration";
 
-export interface Stat {
+export interface Stmt {
   kind: NodeType;
 }
 
-export interface Program extends Stat {
+export interface Program extends Stmt {
   kind: "Program";
-  body: Stat[];
+  body: Stmt[];
 }
 
-export interface Expr extends Stat {}
+export interface VarDeclaration extends Stmt {
+  kind: "VarDeclaration";
+  constant: boolean;
+  identifier: string;
+  value?: Expr;
+}
+
+export interface Expr extends Stmt {}
 
 export interface BinaryExpr extends Expr {
   kind: "BinaryExpr";
