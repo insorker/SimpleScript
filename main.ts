@@ -5,13 +5,20 @@ import { MK_NULL, MK_BOOLEAN, MK_NUMBER, NumberVal } from './runtime/values.ts';
 
 repl()
 
+async function run(filename: string) {
+  const parser = new Parser();
+  const env = new Environment();
+
+  const input = await Deno.readTextFile(filename);
+  const program = parser.produceAST(input);
+  const result = evaluate(program, env);
+  console.log(result);
+}
+
 async function repl() {
   const parser = new Parser();
   const env = new Environment();
-  env.declareVar('x', MK_NUMBER(100));
-  env.declareVar('null', MK_NULL());
-  env.declareVar('true', MK_BOOLEAN(true));
-  env.declareVar('false', MK_BOOLEAN(false));
+
   console.log('\nRepl v0.1');
 
   while (true) {

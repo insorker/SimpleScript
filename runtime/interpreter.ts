@@ -1,6 +1,6 @@
-import { Stmt,NumericLiteral,Identifier,BinaryExpr,Program,VarDeclaration } from "../frontend/ast.ts";
+import { Stmt,NumericLiteral,Identifier,BinaryExpr,Program,VarDeclaration, AssignmentExpr } from "../frontend/ast.ts";
 import Environment from "./environment.ts";
-import { eval_identifier,eval_binary_expr } from "./eval/expression.ts";
+import { eval_identifier,eval_binary_expr, eval_assignment } from "./eval/expression.ts";
 import { eval_program,eval_var_declaration } from "./eval/statement.ts";
 import { RuntimeVal,MK_NUMBER } from "./values.ts";
 
@@ -10,6 +10,8 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
       return MK_NUMBER((astNode as NumericLiteral).value);
     case "Identifier":
       return eval_identifier(astNode as Identifier, env);
+    case "AssignmentExpr":
+      return eval_assignment(astNode as AssignmentExpr, env);
     case "BinaryExpr":
       return eval_binary_expr(astNode as BinaryExpr, env);
     case "Program":

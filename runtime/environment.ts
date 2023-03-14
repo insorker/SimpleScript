@@ -1,4 +1,10 @@
-import { RuntimeVal } from "./values.ts";
+import { MK_BOOLEAN, MK_NULL, RuntimeVal } from "./values.ts";
+
+function setupScope(env: Environment) {
+  env.declareVar('null', MK_NULL(), true);
+  env.declareVar('true', MK_BOOLEAN(true), true);
+  env.declareVar('false', MK_BOOLEAN(false), true);
+}
 
 export default class Environment {
   private parent?: Environment;
@@ -6,9 +12,14 @@ export default class Environment {
   private constants: Set<string>;
 
   constructor(parentENV?: Environment) {
+    const global = parentENV ? false : true;
     this.parent = parentENV;
     this.variables = new Map();
     this.constants = new Set();
+
+    if (global) {
+      setupScope(this);
+    }
   }
 
   public declareVar(varname: string, value: RuntimeVal, constant: boolean): RuntimeVal {
